@@ -1,6 +1,0 @@
-{
-  "primary_date_col": "date",
-  "primary_amount_col": "cashless_payment",
-  "parsed_date_col": "__parsed_date",
-  "clean_amount_col": "__amount_clean"
-}
