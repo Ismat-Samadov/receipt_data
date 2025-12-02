@@ -79,12 +79,12 @@ graph TD
 
 ```mermaid
 flowchart LR
-    A[data/ids.txt] --> B[scrape.py]
+    A[data/ids.txt] --> B[scripts/scrape.py]
     B --> C[monitoring.e-kassa.gov.az]
-    C --> D[receipts/*.jpeg]
+    C --> D[data/receipts/*.jpeg]
     D --> E{Parser Choice}
-    E -->|Traditional| F[parse.py]
-    E -->|AI-Enhanced| G[ai_parse.py]
+    E -->|Traditional| F[parsing/traditional_parsing.py]
+    E -->|AI-Enhanced| G[parsing/ai_parse.py]
     F --> H[Tesseract OCR]
     G --> I[Tesseract OCR]
     H --> J[Regex Patterns]
@@ -147,9 +147,14 @@ receipt_data/
 ├── README.md                    # This comprehensive documentation
 ├── .env                        # Environment variables (OpenAI API key)
 ├── requirements.txt            # Python dependencies
-├── scrape.py                   # Receipt image scraper (optimized)
-├── parse.py                    # Traditional regex-based parser
-├── ai_parse.py                 # Advanced AI parser (GPT-4o + speed optimized)
+├── scripts/                    # Processing scripts directory
+│   └── scrape.py               # Receipt image scraper (optimized)
+├── parsing/                    # Data extraction parsers directory
+│   ├── traditional_parsing.py  # Traditional regex-based parser
+│   └── ai_parse.py             # Advanced AI parser (GPT-4o + speed optimized)
+├── notebooks/                  # Analysis notebooks directory
+│   ├── EDA.ipynb               # Exploratory Data Analysis notebook
+│   └── requirements.txt        # Notebook dependencies
 ├── data/                       # Centralized data directory
 │   ├── ids.txt                 # List of fiscal IDs to scrape
 │   ├── receipts/               # Downloaded receipt images (62 files)
@@ -169,9 +174,9 @@ graph LR
     end
     
     subgraph "Processing Scripts"
-        D[scrape.py]
-        E[parse.py]
-        F[ai_parse.py]
+        D[scripts/scrape.py]
+        E[parsing/traditional_parsing.py]
+        F[parsing/ai_parse.py]
     end
     
     subgraph "Generated Data"
@@ -274,10 +279,10 @@ echo "openai=your_api_key_here" > .env
 echo "Es6HZUh8kGx5" >> data/ids.txt
 
 # 3. Download receipt images
-python scrape.py
+python scripts/scrape.py
 
 # 4. Extract data with AI (recommended)
-python ai_parse.py
+python parsing/ai_parse.py
 
 # 5. View results
 open data/ai_improved.csv
@@ -291,19 +296,19 @@ open data/ai_improved.csv
 
 2. **Collect Receipt Images**:
    ```bash
-   python scrape.py
+   python scripts/scrape.py
    ```
 
 3. **Extract Data (Choose one approach)**:
-   
+
    **Traditional Parser:**
    ```bash
-   python parse.py
+   python parsing/traditional_parsing.py
    ```
-   
+
    **AI-Enhanced Parser:**
    ```bash
-   python ai_parse.py
+   python parsing/ai_parse.py
    ```
 
 4. **View Results**:
@@ -315,28 +320,28 @@ open data/ai_improved.csv
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant F as fiscal_ids.txt
-    participant S as scraper.py
+    participant F as data/ids.txt
+    participant S as scripts/scrape.py
     participant W as Website
-    participant R as receipts/
+    participant R as data/receipts/
     participant P as Parser
     participant C as CSV Output
-    
+
     U->>F: 1. Add fiscal IDs
     U->>S: 2. Run scraper
     S->>W: 3. Download receipts
     W->>R: 4. Save images
-    
+
     alt Traditional Parser
-        U->>P: 5a. Run parse.py
+        U->>P: 5a. Run parsing/traditional_parsing.py
         P->>R: 6a. Process images
         P->>C: 7a. Generate data/traditional.csv
     else AI-Enhanced Parser
-        U->>P: 5b. Run ai_parse.py
+        U->>P: 5b. Run parsing/ai_parse.py
         P->>R: 6b. Process images
         P->>C: 7b. Generate data/ai_improved.csv
     end
-    
+
     C->>U: 8. View results
 ```
 
@@ -344,7 +349,7 @@ sequenceDiagram
 
 ## 📥 Data Collection
 
-The scraper (`scraper.py`) downloads receipt images from the Azerbaijan e-receipt monitoring system.
+The scraper (`scripts/scrape.py`) downloads receipt images from the Azerbaijan e-receipt monitoring system.
 
 ### Configuration
 ```python
@@ -680,30 +685,30 @@ for attempt in range(RETRY_ATTEMPTS):
 ```mermaid
 graph TB
     subgraph "Data Collection Phase"
-        A[data/ids.txt] --> B[scrape.py]
+        A[data/ids.txt] --> B[scripts/scrape.py]
         B --> C[CSRF Token Fetch]
         C --> D[Receipt Download]
-        D --> E[receipts/*.jpeg]
+        D --> E[data/receipts/*.jpeg]
     end
-    
+
     subgraph "Traditional Parser Path"
-        E --> F[parser.py]
+        E --> F[parsing/traditional_parsing.py]
         F --> G[Tesseract OCR]
         G --> H[Regex Patterns]
         H --> I[Data Cleaning]
         I --> J[VAT Code Removal]
         J --> K[Math Validation]
-        K --> L[receipts.csv]
+        K --> L[data/traditional.csv]
     end
-    
+
     subgraph "AI-Enhanced Parser Path"
-        E --> M[ai_parser_batch.py]
+        E --> M[parsing/ai_parse.py]
         M --> N[Tesseract OCR]
         N --> O[OpenAI API Call]
         O --> P[Structured Extraction]
         P --> Q[Auto Error Correction]
         Q --> R[Validation & Cleaning]
-        R --> S[receipts_ai_enhanced.csv]
+        R --> S[data/ai_improved.csv]
     end
     
     style A fill:#e1f5fe
@@ -840,23 +845,23 @@ filename,store_name,store_address,item_name,quantity,unit_price,line_total,date,
 
 ### Scraper Configuration
 ```python
-# scraper.py
+# scripts/scrape.py
 BASE_URL = "https://monitoring.e-kassa.gov.az/pks-monitoring/2.0.0/documents/"
-FISCAL_IDS_FILE = "data/ids.txt"
-OUTPUT_DIR = "data/receipts"
+FISCAL_IDS_FILE = "../data/ids.txt"
+OUTPUT_DIR = "../data/receipts"
 REQUEST_DELAY_SECONDS = 2.0  # Adjust for rate limiting
 ```
 
 ### Parser Configuration
 ```python
-# parse.py / ai_parse.py
-RECEIPTS_DIR = 'data/receipts'
-OUTPUT_CSV = 'data/traditional.csv'  # or 'data/ai_improved.csv'
+# parsing/traditional_parsing.py / parsing/ai_parse.py
+RECEIPTS_DIR = '../data/receipts'
+OUTPUT_CSV = '../data/traditional.csv'  # or '../data/ai_improved.csv'
 ```
 
 ### AI Parser Configuration
 ```python
-# ai_parse.py
+# parsing/ai_parse.py
 BATCH_SIZE = 10          # Optimized batch size for speed
 MAX_WORKERS = 5          # Increased concurrent workers
 MODEL = "gpt-4o"         # Advanced OpenAI model for better accuracy

@@ -10,10 +10,10 @@ from urllib3.util.retry import Retry
 BASE_URL = "https://monitoring.e-kassa.gov.az/pks-monitoring/2.0.0/documents/"
 
 # Input file containing fiscal IDs (one ID per line)
-FISCAL_IDS_FILE = "data/ids.txt"
+FISCAL_IDS_FILE = "../data/ids.txt"
 
 # Output directory to save the downloaded receipts
-OUTPUT_DIR = "data/receipts"
+OUTPUT_DIR = "../data/receipts"
 
 # Delay in seconds between each request (after successful download or max retries)
 # This is for politeness, the retry mechanism handles delays for failed attempts.

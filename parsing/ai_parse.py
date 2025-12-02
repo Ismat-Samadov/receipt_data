@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- CONFIGURATION ---
-RECEIPTS_DIR = 'data/receipts'
-OUTPUT_CSV = 'data/ai_improved.csv'
+RECEIPTS_DIR = '../data/receipts'
+OUTPUT_CSV = '../data/ai_improved.csv'
 BATCH_SIZE = 10  # Larger batches for speed
 MAX_WORKERS = 5  # More concurrent workers for parallel processing
 

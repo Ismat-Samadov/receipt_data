@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.ERROR)
 # For Windows: pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 # For Linux/macOS, it's often found automatically if installed via package managers.
 
-RECEIPTS_DIR = 'data/receipts'
-OUTPUT_CSV = 'data/traditional.csv'
+RECEIPTS_DIR = '../data/receipts'
+OUTPUT_CSV = '../data/traditional.csv'
 
 def clean_item_name(item_name):
     """
