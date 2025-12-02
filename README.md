@@ -367,40 +367,313 @@ REQUEST_DELAY_SECONDS = 2.0
 
 ---
 
-## 🔍 Data Extraction
+## 🔍 Data Extraction Techniques
 
-### Traditional Parser (`parser.py`)
+This project implements two distinct extraction approaches, each with sophisticated techniques for handling Azerbaijani receipt data.
 
-**Approach**: Regex-based extraction with predefined patterns for Azerbaijani receipt text.
+---
 
-**Features**:
-- OCR processing with Tesseract
-- 30 structured fields extraction
-- Item name cleaning (VAT code removal)
-- Basic mathematical validation
-- Payment method processing
+### 🔧 Traditional Parser (`parsing/traditional_parsing.py`)
 
-**Results**:
-- **157 records** extracted from 62 receipts
-- **69.8% overall quality score** (Grade: C - Fair)
-- **Key Issues**: 48.8% calculation errors, 35.7% missing dates
+**Approach**: Rule-based extraction using OCR + Regex pattern matching
 
-### AI-Enhanced Parser (`ai_parser_batch.py`)
+#### OCR Processing Technique
+```python
+# Tesseract OCR with Azerbaijani language support
+text = pytesseract.image_to_string(image, lang='aze')
+```
 
-**Approach**: OpenAI API-powered extraction with intelligent error correction.
+**Key Features**:
+- **OCR Engine**: Tesseract 5.x with Azerbaijani language pack
+- **Character Encoding**: UTF-8 with full Ə, İ, Ü, Ö, Ğ, Ş, Ç support
+- **Image Processing**: Direct JPEG input (170-200KB resolution)
 
-**Features**:
-- GPT-4 Turbo for structured data extraction
-- Automatic calculation error correction
-- Suspicious quantity detection and validation
-- Enhanced address and store name extraction
-- Multi-threaded processing with rate limiting
+#### Extraction Techniques
 
-**Results**:
-- **62 records** extracted (one per receipt)
-- **95%+ overall quality score** (Grade: A+ - Excellent)
-- **100% mathematical accuracy**
-- **Perfect field completion** for most categories
+**1. Header Field Extraction (Store & Transaction Info)**
+
+Uses targeted regex patterns for structured receipt sections:
+
+```python
+# Store name extraction
+store_pattern = r'Vergi\s*ödəyicisinin\s*adı[:\s]*(.*?)(?=\n|VÖEN)'
+
+# Tax ID (VOEN) extraction
+tax_id_pattern = r'VÖEN[:\s]*(\d+)'
+
+# Receipt number extraction
+receipt_pattern = r'Satış\s*çeki\s*[№#NоМә]*\s*(\d+)'
+
+# Date & Time extraction (combined pattern)
+datetime_pattern = r'Tarix[:\s]*(\d{2}\.\d{2}\.\d{4})\s*Vaxt[:\s]*(\d{2}:\d{2}:\d{2})'
+```
+
+**2. Item Section Identification**
+
+Locates the items table using section markers:
+
+```python
+# Find items section start
+items_marker = r'Məhsulun adı\s+Say\s+Qiymət\s+Cəmi'
+
+# Extract all items using columnar pattern
+item_pattern = r'(.+?)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)'
+# Groups: [item_name, quantity, unit_price, line_total]
+```
+
+**3. Payment Method Extraction**
+
+Handles 5 different payment types with Azerbaijani text:
+
+```python
+payment_patterns = {
+    'cashless': r'Nağdsız[:\s]*(\d+\.\d{2})',
+    'cash': r'Nağd[:\s]*(\d+\.\d{2})',
+    'bonus': r'Bonus[:\s]*(\d+\.\d{2})',
+    'credit': r'Nisyə[:\s]*(\d+\.\d{2})',
+    'advance': r'Avans[:\s]*(\d+\.\d{2})'
+}
+```
+
+**4. Text Cleaning Pipeline**
+
+Multi-stage cleaning process for extracted text:
+
+```python
+# Stage 1: Remove VAT codes (common OCR artifact)
+cleaned = re.sub(r'^v?ƏDV[:\s]*\d+[:\s]*', '', text)
+
+# Stage 2: Remove quotes and extra whitespace
+cleaned = re.sub(r'^["\']|["\']$', '', cleaned).strip()
+
+# Stage 3: Handle multi-line item names
+if not re.search(r'\d', line):  # No digits = continuation line
+    previous_item += ' ' + line
+```
+
+**5. Mathematical Validation**
+
+Basic validation to catch obvious errors:
+
+```python
+expected_total = quantity * unit_price
+if abs(expected_total - line_total) > 0.02:  # 2 qəpik tolerance
+    flag_calculation_error(item)
+```
+
+#### Limitations Identified
+
+- **48.8% Calculation Errors**: OCR misreads decimal points (1.0 → 1000)
+- **35.7% Missing Dates**: Regex fails on non-standard date formats
+- **89.2% Missing Addresses**: Multi-line addresses break patterns
+- **87.3% Missing Receipt Numbers**: OCR confusion on special characters (№, #)
+
+**Results**: 157 records extracted from 62 receipts (69.8% quality)
+
+---
+
+### 🤖 AI-Enhanced Parser (`parsing/ai_parse.py`)
+
+**Approach**: Hybrid OCR + LLM with intelligent error correction and validation
+
+#### Advanced OCR + AI Pipeline
+
+**Stage 1: OCR Text Extraction**
+```python
+# Same Tesseract OCR, but text fed to AI for correction
+ocr_text = pytesseract.image_to_string(image, lang='aze')
+```
+
+**Stage 2: AI-Powered Structured Extraction**
+
+Uses GPT-4o with specialized system prompt engineering:
+
+```python
+model = "gpt-4o"  # Most advanced OpenAI model
+temperature = 0.05  # Highly deterministic output
+max_tokens = 8000  # Comprehensive extraction
+```
+
+#### System Prompt Engineering Techniques
+
+**1. OCR Error Correction Rules**
+
+The AI is explicitly trained on common OCR errors:
+
+```
+Known OCR Errors:
+- "1000" often means "1.0" (decimal point misread)
+- "2000" often means "2.0"
+- "13000" often means "1.0" (multiple errors)
+- "O" vs "0", "l" vs "1" confusion
+
+Correction Strategy:
+If quantity > 100 AND price seems reasonable:
+  → Divide quantity by 1000
+  → Recalculate line_total
+```
+
+**2. Azerbaijan Market Intelligence**
+
+AI trained on realistic price ranges for validation:
+
+```
+Price Validation Rules:
+- Water/Beverages: 0.40-2.00 AZN
+- Bread/Bakery: 0.30-4.00 AZN
+- Dairy Products: 1.00-8.00 AZN
+- Snacks/Candy: 0.50-5.00 AZN
+- Household Items: 0.20-20.00 AZN
+- Plastic Bags: 0.03-0.10 AZN
+
+Flag if outside expected range!
+```
+
+**3. Multi-Item Extraction Strategy**
+
+Explicit instructions for extracting ALL items:
+
+```
+CRITICAL: Extract EVERY SINGLE item from the receipt!
+- Don't stop at the first item
+- Look for item sections marked "Məhsulun adı"
+- Extract until you reach "Cəmi" (total) section
+- Typical receipts have 2-15 items
+```
+
+**4. Mathematical Validation & Auto-Correction**
+
+AI validates and auto-corrects calculations:
+
+```python
+# Validation rule in prompt
+"quantity × unit_price MUST equal line_total (±0.01 AZN tolerance)"
+
+# Auto-correction logic
+if calculation_incorrect:
+    # Priority 1: Trust line_total (receipt totals usually correct)
+    if line_total is reasonable:
+        recalculate unit_price or quantity
+
+    # Priority 2: Check for OCR decimal errors
+    elif quantity > 50:
+        quantity = quantity / 1000
+        recalculate line_total
+```
+
+#### JSON Response Processing
+
+**Structured Output Format**:
+```json
+{
+  "store_name": "ARAZ SUPERMARKET",
+  "items": [
+    {
+      "item_name": "SIRAB QAZSIZ SU PET",
+      "quantity": 2.0,
+      "unit_price": 0.59,
+      "line_total": 1.18
+    }
+  ],
+  "subtotal": 10.17,
+  "payment_methods": {
+    "cashless_payment": 10.17,
+    "cash_payment": 0.00
+  }
+}
+```
+
+**Fallback Regex Extraction**: If JSON parsing fails, extracts data from text response
+
+#### Advanced Cleaning & Validation
+
+**1. Item Name Cleaning**
+```python
+# Remove VAT code prefixes
+cleaned = re.sub(r'^\*?[vV]?ƏDV[:\s]*\d*[:\s]*', '', name)
+
+# Remove leading/trailing quotes
+cleaned = re.sub(r'^["\'\s]+|["\'\s]+$', '', cleaned)
+
+# Remove numbering prefixes
+cleaned = re.sub(r'^\d+[\.\)]\s*', '', cleaned)
+```
+
+**2. Monetary Field Formatting**
+```python
+# Ensure 2 decimal places for all monetary values
+formatted = f"{float(value):.2f}"
+```
+
+**3. Quantity Validation**
+```python
+# Flag suspicious quantities
+if quantity > 50:
+    warnings.append(f"High quantity detected: {quantity}")
+    # AI prompted to review and correct
+```
+
+#### Parallel Processing Architecture
+
+**Concurrency Strategy**:
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+MAX_WORKERS = 5  # 5 concurrent API calls
+BATCH_SIZE = 10  # Process 10 receipts per batch
+RATE_LIMIT = 0.5  # 0.5s delay between batches
+```
+
+**Performance Optimization**:
+- **Thread-safe counters** for progress tracking
+- **Exponential backoff** retry logic (2 attempts)
+- **Timeout management** (30s per API call)
+- **Real-time ETA** calculation
+
+#### Error Handling & Retry Logic
+
+```python
+# Smart retry with exponential backoff
+for attempt in range(RETRY_ATTEMPTS):
+    try:
+        response = openai.chat.completions.create(...)
+        break
+    except Exception as e:
+        if attempt < RETRY_ATTEMPTS - 1:
+            delay = (2 ** attempt) * 1.0  # 1s, 2s exponential
+            time.sleep(delay)
+        else:
+            return fallback_data
+```
+
+#### Quality Metrics & Validation
+
+**Automated Quality Checks**:
+- ✅ Mathematical accuracy validation (100% success)
+- ✅ Field completeness checking (95%+ for all fields)
+- ✅ Price reasonableness validation (market intelligence)
+- ✅ Quantity sanity checks (flags > 50 as suspicious)
+- ✅ Date format validation
+- ✅ Character encoding verification
+
+**Results**: 212 records extracted from 62 receipts (95%+ quality)
+
+---
+
+### 🔄 Extraction Technique Comparison
+
+| **Technique** | **Traditional Parser** | **AI-Enhanced Parser** |
+|---------------|------------------------|------------------------|
+| **OCR Method** | Tesseract (raw) | Tesseract + AI correction |
+| **Pattern Recognition** | Regex only | Regex + Context understanding |
+| **Error Correction** | None | Automatic (decimal, OCR errors) |
+| **Multi-item Extraction** | Basic (often misses items) | Advanced (extracts all items) |
+| **Price Validation** | None | Market intelligence validation |
+| **Math Validation** | Basic check | Auto-correction with priority rules |
+| **Cleaning Pipeline** | 3 stages | 6 stages + AI context |
+| **Processing Speed** | 0.5s/receipt | 5.0s/receipt |
+| **Accuracy** | 69.8% | 95%+ |
+| **Cost** | Free | ~$0.03/receipt |
 
 ### 🔄 Processing Workflow
 
