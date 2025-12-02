@@ -962,13 +962,13 @@ RETRY_ATTEMPTS = 2       # Reduced retries for faster processing
 
 ### Recommendation
 
-**For Production Use**: Use the AI-enhanced parser (`ai_parser_batch.py`) for:
+**For Production Use**: Use the AI-enhanced parser (`parsing/ai_parse.py`) for:
 - Higher accuracy and completeness
 - Automatic error correction
 - Better handling of edge cases
 - Consistent data quality
 
-**For Development/Testing**: Use the traditional parser (`parser.py`) for:
+**For Development/Testing**: Use the traditional parser (`parsing/traditional_parsing.py`) for:
 - Understanding base extraction logic
 - Cost-free processing
 - Debugging OCR issues
