@@ -5,8 +5,6 @@ __pycache__/
 .claude
 # C extensions
 *.so
-*.csv
-data/*
 
 
 # Distribution / packaging

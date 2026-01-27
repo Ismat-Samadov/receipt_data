@@ -1,0 +1,4 @@
+id,fiscal_id,insert_date,cheque_date,store_name,buy_amount,cash_amount,cashless_amount,vat_amount,refund_amount,state,channel_type,cheque_status_message,with_card,card_cashback_amount
+2071825064,3ZPFJewrUQF4,2025-12-06T19:39:29Z,2025-12-06T10:25:54Z,ARAZ MARKET,10.65,0.00,10.65,0.61,0.11,COMPLETED,BIRBANK,ƏDV uğurla geri qaytarılıb.,WITHOUT_EDV_CARD,0.00
+2071824583,715d3CxBK7BK,2025-12-06T19:39:08Z,2025-12-06T19:11:35Z,ARAZ MARKET,7.29,0.00,7.29,1.11,0.19,COMPLETED,BIRBANK,ƏDV uğurla geri qaytarılıb.,WITHOUT_EDV_CARD,0.00
+2064794965,AwigUkTjFzRm,2025-11-30T19:47:07Z,2025-11-30T19:46:24Z,GRAND MARKET,14.14,0.00,14.14,1.15,0.20,COMPLETED,BIRBANK,ƏDV uğurla geri qaytarılıb.,WITHOUT_EDV_CARD,0.00
