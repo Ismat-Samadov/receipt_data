@@ -23,7 +23,7 @@ MAX_RETRIES = 3
 RETRY_DELAY = 2.0
 
 # Date range configuration
-DATE_RANGE_DAYS = 365  # Last 365 days (1 year)
+DATE_RANGE_DAYS = 2557  # From 2019 to present (~7 years)
 TO_DATE = datetime.now()
 FROM_DATE = TO_DATE - timedelta(days=DATE_RANGE_DAYS)
 
@@ -75,7 +75,7 @@ class KapitalBankScraper:
                     cookie_dict[key] = value
             self.session.cookies.update(cookie_dict)
         else:
-            # Default cookies - Update from your browser
+            # Default cookies - Updated from browser
             self.session.cookies.update({
                 '_csrf': 'GsXaXtAPBBtW9IaKcCv1pqJY',
                 '__cf_bm': '8.71EWNh3JB1G_i7vkDolbAXSBu0nDoA_1HVYEPrsTk-1769540013-1.0.1.1-6SRbyDqoqeKA1ZRUVOEJlh3PS9yEujUhhZAYMH47mbinTKmFlif_HQP8GhcRxwfkaGKVaPVkqDGQFoLMElpv2t4KYFA09tUNLtfAiHaeg2o',
@@ -85,8 +85,11 @@ class KapitalBankScraper:
                 '_fbp': 'fb.1.1769540013423.8565377561980374',
                 '_clck': '5bnshr%5E2%5Eg32%5E0%5E2218',
                 '_gcl_au': '1.1.330248463.1769540018',
-                'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTU0MDQ1NX0.UYqZf8FSLh_rXGFVN6ZNiNnJH0NsyQ2SYueMU-k-_01KAtRNeroxUanmZDHFhcDC6DS1ueT0WnPAJ_RLgkQ5gQ',
-                'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTU0MTA1NX0.TKYgpR0vmBEZsDND3iou_Tr4zUQUZVmgbMnQpiBqJtkcEBPhjANxIHd9v0JTddqXtQwBr0cXPF_SyklAVDcxfg',
+                '_gat_UA-172642843-1': '1',
+                'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTU0MDk3Mn0.WHaux9P7CHI_I1U_I_F2hX1ZB9UyUZg5-esfQ_32QozrMWGw53-y7uqcFrwVXMSIMeKtLvhJ8SKtQsznrUks3w',
+                'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTU0MTU3Mn0.3M7Jv3CAGJm8JWwEbfJU_SYEUF80QFcmI25BvhrjosEB5vsp4PQyDZFXvirL0I8LBjSZwkKqizRB7NxFrPnbyQ',
+                '_ga_HXWDWPEXE0': 'GS2.2.s1769540013$o1$g1$t1769540672$j29$l0$h0',
+                '_clsk': '1ib8kro%5E1769540673302%5E5%5E1%5Ek.clarity.ms%2Fcollect',
             })
 
     def fetch_page(self, page: int, from_date: datetime, to_date: datetime) -> dict:
@@ -274,8 +277,8 @@ class KapitalBankScraper:
             if records:
                 print("\n📈 Summary Statistics:")
                 print(f"   Total Receipts: {len(records)}")
-                print(f"   Unique Stores: {len(set(r['store_name'] for r in records))}")
-                total_amount = sum(float(r['buy_amount']) for r in records)
+                print(f"   Unique Stores: {len(set(r['store_name'] for r in records if r['store_name']))}")
+                total_amount = sum(float(r['buy_amount']) for r in records if r['buy_amount'] and r['buy_amount'] != '0.00')
                 print(f"   Total Amount: {total_amount:.2f} AZN")
                 completed = sum(1 for r in records if r['state'] == 'COMPLETED')
                 print(f"   Completed: {completed} ({completed/len(records)*100:.1f}%)")
