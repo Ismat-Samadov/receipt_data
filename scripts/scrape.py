@@ -35,7 +35,7 @@ except Exception:
 BASE_URL = "https://monitoring.e-kassa.gov.az/pks-monitoring/2.0.0/documents/"
 
 # Input file (CSV preferred). You can also point to a .txt (one id per line).
-FISCAL_IDS_FILE = "../data/edv_fiscal.csv"
+FISCAL_IDS_FILE = "../data/fiscal_ids_from_api.txt"
 
 # CSV settings
 FISCAL_ID_COLUMN = "FISCAL_ID"  # column name (str) or integer index (0-based) if CSV_HAS_HEADER=False
@@ -75,7 +75,7 @@ COMMON_HEADERS = {
 
 # Crash-proof/resume options
 # Set MAX_IDS to None to process all ids. Or set to 1000 or 2000 etc.
-MAX_IDS = 1500  # e.g. 1000 or 2000 or None
+MAX_IDS = None  # Process all IDs from API
 
 # File extension for saved receipts
 OUTPUT_EXT = ".jpeg"
