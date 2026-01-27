@@ -1,0 +1,41 @@
+{
+  "filename": "3P8vT54yjXo7",
+  "ocr_confidence": 0.4226814378361477,
+  "raw_text": "IF\n082\nW\n28\n#\n8\nQ\n{\n1\nM\n8\nI\nL\nL\ng\n0\n8\n8\n1\n2\n1\n6\n88\n8\n0\n0 0 0\n8 88 8",
+  "items": [
+    {
+      "filename": "3P8vT54yjXo7.jpeg",
+      "store_name": null,
+      "store_address": null,
+      "store_code": null,
+      "taxpayer_name": null,
+      "tax_id": null,
+      "receipt_number": null,
+      "cashier_name": null,
+      "date": null,
+      "time": null,
+      "item_name": null,
+      "quantity": null,
+      "unit_price": null,
+      "line_total": null,
+      "subtotal": null,
+      "vat_18_percent": null,
+      "total_tax": null,
+      "cashless_payment": null,
+      "cash_payment": null,
+      "bonus_payment": null,
+      "advance_payment": null,
+      "credit_payment": null,
+      "queue_number": null,
+      "cash_register_model": null,
+      "cash_register_serial": null,
+      "fiscal_id": null,
+      "fiscal_registration": null,
+      "refund_amount": null,
+      "refund_date": null,
+      "refund_time": null,
+      "ocr_confidence": 0.4226814378361477,
+      "parsing_errors": null
+    }
+  ]
+}

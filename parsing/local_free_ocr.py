@@ -502,8 +502,14 @@ class ReceiptParser:
                 })
                 receipt_items.append(ReceiptItem(**item_data))
         else:
-            # No items found - create single row with receipt data
+            # No items found - create single row with receipt data and None for item fields
             logger.warning(f"No items extracted from {filename}")
+            receipt_data.update({
+                'item_name': None,
+                'quantity': None,
+                'unit_price': None,
+                'line_total': None,
+            })
             receipt_items.append(ReceiptItem(**receipt_data))
 
         return receipt_items

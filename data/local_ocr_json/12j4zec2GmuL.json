@@ -1,0 +1,41 @@
+{
+  "filename": "12j4zec2GmuL",
+  "ocr_confidence": 0.4702768003509391,
+  "raw_text": "IF\n0!\n98024\n7\"\n#\n{\n1\nM\n2\nM\n4\n2\n2\n8\n3\n8\n8\n0\n8888\n8\n8\n0\n8",
+  "items": [
+    {
+      "filename": "12j4zec2GmuL.jpeg",
+      "store_name": null,
+      "store_address": null,
+      "store_code": null,
+      "taxpayer_name": null,
+      "tax_id": null,
+      "receipt_number": null,
+      "cashier_name": null,
+      "date": null,
+      "time": null,
+      "item_name": null,
+      "quantity": null,
+      "unit_price": null,
+      "line_total": null,
+      "subtotal": null,
+      "vat_18_percent": null,
+      "total_tax": null,
+      "cashless_payment": null,
+      "cash_payment": null,
+      "bonus_payment": null,
+      "advance_payment": null,
+      "credit_payment": null,
+      "queue_number": null,
+      "cash_register_model": null,
+      "cash_register_serial": null,
+      "fiscal_id": null,
+      "fiscal_registration": null,
+      "refund_amount": null,
+      "refund_date": null,
+      "refund_time": null,
+      "ocr_confidence": 0.4702768003509391,
+      "parsing_errors": null
+    }
+  ]
+}

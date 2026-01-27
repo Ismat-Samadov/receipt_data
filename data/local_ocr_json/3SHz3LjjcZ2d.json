@@ -1,0 +1,41 @@
+{
+  "filename": "3SHz3LjjcZ2d",
+  "ocr_confidence": 0.7837552098295476,
+  "raw_text": "ckl\nObyektin adi:ARAZ MARKET\nObyekun Unvani: AZIOOL BAKI SaHaRi\nRAYONU BUNYAD SORDAROV\nUguIsBBAIL\nev. 15A m -\nObyektin kodu: 1001994141-17013\nVergi odayicisinin adi: \"ARAZ\nSUPERMARKET\" MOHDUd MaSULiyyaTLi\ncamixyati\nVOEN: 1001994141\nSatis\nNe 720584\nceki\nQadir Ebiyev\nKassir:\nTarix:\n14.08.2025\nVaxt:\n20.26.11\nsay\nQiymat Cami\nMahsulun adi\n(adad) 1.49\nGAVALI ANJELIKA $ KG\n2.99\n4.46\n\"Ticarat alavasi: 18%\n(adad)\nSOBA TENDIR-PEC CORE\n0.95\n0.95\n1\n\"ODV-dan azad\nCami\n5.41\nODV 18%\n0.03\n0.20\n2\nODV-dan azad\n5.21\nToplam vergi\n0.03\n3\nOdanis novu\nNagdsiz:\n5.41\nNagd:\n0.00\nBonus:\n0.00\nAvans (beh):\n0.00\nNisya:\n0.00\nNovba arzinda vurulmus\nsayi: 88\ncek\nNKA-nin modeli: Az Smart Fiscal Box\nNKA-nin zavod nomrsi: AFB0000000959\nFiskal ID: 3SHzBLjjcZzd\nNMQ-nin qeydiyyat nomrasi: 0000063545\nwwwe-kassa gov.az\naDV-nin geri qaytarilmasi\nGeri qaytarilan mablag:\n0.01 AZN\nGeri qaytarilma tarixi:\n15.09.2025 15.42",
+  "items": [
+    {
+      "filename": "3SHz3LjjcZ2d.jpeg",
+      "store_name": null,
+      "store_address": null,
+      "store_code": null,
+      "taxpayer_name": null,
+      "tax_id": null,
+      "receipt_number": null,
+      "cashier_name": "Tarix:",
+      "date": "14.08.2025",
+      "time": null,
+      "item_name": null,
+      "quantity": null,
+      "unit_price": null,
+      "line_total": null,
+      "subtotal": null,
+      "vat_18_percent": null,
+      "total_tax": 0.03,
+      "cashless_payment": null,
+      "cash_payment": null,
+      "bonus_payment": 0.0,
+      "advance_payment": null,
+      "credit_payment": null,
+      "queue_number": null,
+      "cash_register_model": null,
+      "cash_register_serial": null,
+      "fiscal_id": "3SHzBLjjcZzd",
+      "fiscal_registration": null,
+      "refund_amount": null,
+      "refund_date": null,
+      "refund_time": null,
+      "ocr_confidence": 0.7837552098295476,
+      "parsing_errors": null
+    }
+  ]
+}
