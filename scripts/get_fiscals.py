@@ -63,7 +63,7 @@ class KapitalBankScraper:
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-            'xsrf-token': self.xsrf_token or 'Hod8Do48-lo95BJVyBsdd8cDZ533uj_z1ywY',
+            'xsrf-token': self.xsrf_token or '',
         })
 
         # Parse cookies if provided as string
