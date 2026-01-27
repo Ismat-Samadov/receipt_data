@@ -1,0 +1,102 @@
+# FREE LOCAL OCR PIPELINE - DEPENDENCIES
+# ========================================
+# Zero-cost, CPU-only receipt processing
+# Compatible with Python 3.8 - 3.11 (NOT 3.12 yet)
+# Total download size: ~2-3 GB
+# Installation time: ~15-30 minutes
+
+# Core Dependencies
+numpy==1.24.3
+opencv-python==4.8.0.76
+pandas==2.0.3
+Pillow==10.0.0
+
+# OCR Engine: PaddleOCR (Primary - Fast & Accurate)
+paddlepaddle==2.5.1
+paddleocr==2.7.0.3
+
+# OCR Engine: EasyOCR (Fallback - More Accurate, Slower)
+# Requires PyTorch CPU
+torch==2.0.1
+torchvision==0.15.2
+easyocr==1.7.0
+
+# Utility Dependencies (auto-installed)
+# - shapely (PaddleOCR dependency)
+# - pyclipper (PaddleOCR dependency)
+# - imgaug (PaddleOCR dependency)
+# - lmdb (PaddleOCR dependency)
+# - scipy (EasyOCR dependency)
+# - scikit-image (EasyOCR dependency)
+
+# Optional: PDF Support (if processing PDF receipts)
+# pdf2image==1.16.3
+# Pillow==10.0.0  # already listed
+
+# Optional: Progress Bars
+# tqdm==4.66.1
+
+# ========================================
+# INSTALLATION INSTRUCTIONS
+# ========================================
+#
+# Step 1: Create virtual environment
+#   python3.10 -m venv venv_free_ocr
+#   source venv_free_ocr/bin/activate  # macOS/Linux
+#   # OR: venv_free_ocr\Scripts\activate  # Windows
+#
+# Step 2: Upgrade pip
+#   pip install --upgrade pip setuptools wheel
+#
+# Step 3: Install dependencies
+#   pip install -r requirements_free_ocr.txt
+#
+# Step 4: For PyTorch (EasyOCR), use CPU-only wheel
+#   pip install torch==2.0.1 torchvision==0.15.2 \
+#     --index-url https://download.pytorch.org/whl/cpu
+#
+# Step 5: Verify installation
+#   python -c "from paddleocr import PaddleOCR; print('✓ OK')"
+#   python -c "import easyocr; print('✓ OK')"
+#
+# ========================================
+# MINIMAL INSTALLATION (PaddleOCR only)
+# ========================================
+# If you only want PaddleOCR (3x faster, uses less RAM):
+#
+#   pip install numpy==1.24.3
+#   pip install opencv-python==4.8.0.76
+#   pip install pandas==2.0.3
+#   pip install Pillow==10.0.0
+#   pip install paddlepaddle==2.5.1
+#   pip install paddleocr==2.7.0.3
+#
+# Then edit local_free_ocr.py:
+#   USE_EASYOCR_FALLBACK = False
+#
+# ========================================
+# TROUBLESHOOTING
+# ========================================
+#
+# Issue: PaddlePaddle installation fails
+# Solution:
+#   pip install paddlepaddle==2.5.1 \
+#     -i https://mirror.baidu.com/pypi/simple
+#
+# Issue: PyTorch is too large (1.5 GB)
+# Solution: Use PaddleOCR only (skip EasyOCR)
+#
+# Issue: Python 3.12 compatibility errors
+# Solution: Use Python 3.10 instead
+#   brew install python@3.10  # macOS
+#   python3.10 -m venv venv_free_ocr
+#
+# ========================================
+# HARDWARE REQUIREMENTS
+# ========================================
+# CPU: Any modern processor (no GPU needed)
+# RAM: 16 GB recommended (4-6 GB used)
+# Storage: 5 GB free (models + data)
+# OS: Windows, macOS, Linux
+#
+# ========================================
