@@ -42,14 +42,17 @@ class KapitalBankScraper:
         """
         Setup authentication headers
 
-        IMPORTANT: Update these values from your browser's Network tab:
+        IMPORTANT: Provide tokens via environment variables or command-line:
+        - XSRF_TOKEN: The xsrf-token from request headers
+        - KB_COOKIES: The entire cookie string from request headers
+
+        Or update the default values in this method from your browser's Network tab:
         1. Go to https://edvgerial.kapitalbank.az/az/dashboard
         2. Open DevTools (F12) -> Network tab
         3. Make a request to /api/v1/cashback/history
         4. Copy the cookies and xsrf-token from the request headers
         """
 
-        # TODO: UPDATE THESE VALUES FROM YOUR BROWSER
         self.session.headers.update({
             'accept': '*/*',
             'accept-language': 'az',
@@ -60,24 +63,31 @@ class KapitalBankScraper:
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-
-            # XSRF Token - Update this from your browser
-            'xsrf-token': 'Hod8Do48-lo95BJVyBsdd8cDZ533uj_z1ywY',
+            'xsrf-token': self.xsrf_token or 'Hod8Do48-lo95BJVyBsdd8cDZ533uj_z1ywY',
         })
 
-        # Cookies - Update this entire cookie string from your browser
-        self.session.cookies.update({
-            '_csrf': 'GsXaXtAPBBtW9IaKcCv1pqJY',
-            '__cf_bm': '8.71EWNh3JB1G_i7vkDolbAXSBu0nDoA_1HVYEPrsTk-1769540013-1.0.1.1-6SRbyDqoqeKA1ZRUVOEJlh3PS9yEujUhhZAYMH47mbinTKmFlif_HQP8GhcRxwfkaGKVaPVkqDGQFoLMElpv2t4KYFA09tUNLtfAiHaeg2o',
-            '_cfuvid': 'z2cUFvMdzqXi7fZ3k0hhr5nBYhtWfSLTHveKeUbVNKg-1769540013328-0.0.1.1-604800000',
-            '_ga': 'GA1.2.432138089.1769540013',
-            '_gid': 'GA1.2.1613765365.1769540013',
-            '_fbp': 'fb.1.1769540013423.8565377561980374',
-            '_clck': '5bnshr%5E2%5Eg32%5E0%5E2218',
-            '_gcl_au': '1.1.330248463.1769540018',
-            'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTU0MDQ1NX0.UYqZf8FSLh_rXGFVN6ZNiNnJH0NsyQ2SYueMU-k-_01KAtRNeroxUanmZDHFhcDC6DS1ueT0WnPAJ_RLgkQ5gQ',
-            'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTU0MTA1NX0.TKYgpR0vmBEZsDND3iou_Tr4zUQUZVmgbMnQpiBqJtkcEBPhjANxIHd9v0JTddqXtQwBr0cXPF_SyklAVDcxfg',
-        })
+        # Parse cookies if provided as string
+        if self.cookies:
+            cookie_dict = {}
+            for item in self.cookies.split('; '):
+                if '=' in item:
+                    key, value = item.split('=', 1)
+                    cookie_dict[key] = value
+            self.session.cookies.update(cookie_dict)
+        else:
+            # Default cookies - Update from your browser
+            self.session.cookies.update({
+                '_csrf': 'GsXaXtAPBBtW9IaKcCv1pqJY',
+                '__cf_bm': '8.71EWNh3JB1G_i7vkDolbAXSBu0nDoA_1HVYEPrsTk-1769540013-1.0.1.1-6SRbyDqoqeKA1ZRUVOEJlh3PS9yEujUhhZAYMH47mbinTKmFlif_HQP8GhcRxwfkaGKVaPVkqDGQFoLMElpv2t4KYFA09tUNLtfAiHaeg2o',
+                '_cfuvid': 'z2cUFvMdzqXi7fZ3k0hhr5nBYhtWfSLTHveKeUbVNKg-1769540013328-0.0.1.1-604800000',
+                '_ga': 'GA1.2.432138089.1769540013',
+                '_gid': 'GA1.2.1613765365.1769540013',
+                '_fbp': 'fb.1.1769540013423.8565377561980374',
+                '_clck': '5bnshr%5E2%5Eg32%5E0%5E2218',
+                '_gcl_au': '1.1.330248463.1769540018',
+                'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTU0MDQ1NX0.UYqZf8FSLh_rXGFVN6ZNiNnJH0NsyQ2SYueMU-k-_01KAtRNeroxUanmZDHFhcDC6DS1ueT0WnPAJ_RLgkQ5gQ',
+                'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTU0MTA1NX0.TKYgpR0vmBEZsDND3iou_Tr4zUQUZVmgbMnQpiBqJtkcEBPhjANxIHd9v0JTddqXtQwBr0cXPF_SyklAVDcxfg',
+            })
 
     def fetch_page(self, page: int, from_date: datetime, to_date: datetime) -> dict:
         """
@@ -282,7 +292,26 @@ class KapitalBankScraper:
 
 def main():
     """Entry point"""
-    scraper = KapitalBankScraper()
+    parser = argparse.ArgumentParser(
+        description='Fetch fiscal IDs from Kapital Bank EDV API',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  # Using environment variables
+  export XSRF_TOKEN="your_token_here"
+  export KB_COOKIES="cookie1=value1; cookie2=value2; ..."
+  python scripts/get_fiscals.py
+
+  # Using command-line arguments
+  python scripts/get_fiscals.py --xsrf-token "your_token" --cookies "cookie_string"
+        '''
+    )
+    parser.add_argument('--xsrf-token', help='XSRF token from browser request headers')
+    parser.add_argument('--cookies', help='Cookie string from browser request headers')
+
+    args = parser.parse_args()
+
+    scraper = KapitalBankScraper(xsrf_token=args.xsrf_token, cookies=args.cookies)
     scraper.run()
 
 
