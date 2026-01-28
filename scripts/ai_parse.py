@@ -125,7 +125,15 @@ RECEIPT_SCHEMA = {
                     "refund_date": {"type": ["string", "null"]},
                     "refund_time": {"type": ["string", "null"]}
                 },
-                "required": ["filename", "item_name", "quantity", "unit_price", "line_total"],
+                "required": [
+                    "filename", "store_name", "store_address", "store_code", "taxpayer_name",
+                    "tax_id", "receipt_number", "cashier_name", "date", "time",
+                    "item_name", "quantity", "unit_price", "line_total", "subtotal",
+                    "vat_18_percent", "total_tax", "cashless_payment", "cash_payment",
+                    "bonus_payment", "advance_payment", "credit_payment", "queue_number",
+                    "cash_register_model", "cash_register_serial", "fiscal_id",
+                    "fiscal_registration", "refund_amount", "refund_date", "refund_time"
+                ],
                 "additionalProperties": False
             }
         }
