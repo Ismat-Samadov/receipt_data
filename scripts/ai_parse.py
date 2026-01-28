@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 # --- CONFIGURATION ---
 RECEIPTS_DIR = Path('../data/receipts')
-OUTPUT_CSV = Path('../data/ai_improved.csv')
+OUTPUT_CSV = Path('../data/items.csv')
 BATCH_SIZE = 5  # Smaller batches for vision API
 MAX_WORKERS = 3  # Reduced for API rate limiting
 MAX_RETRIES = 3
