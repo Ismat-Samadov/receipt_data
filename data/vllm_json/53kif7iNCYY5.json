@@ -1,0 +1,32 @@
+{
+  "store_name": "Store business name",
+  "store_address": "Full store address",
+  "store_code": "Store code (if present)",
+  "taxpayer_name": "Taxpayer name (same as store name)",
+  "tax_id": "VÖEN number",
+  "receipt_number": "Receipt/check number",
+  "cashier_name": "Cashier full name",
+  "date": "DD.MM.YYYY",
+  "time": "HH:MM:SS",
+  "items": [
+    {
+      "name": "Clean item name (no ƏDV codes)",
+      "quantity": 1.0,
+      "unit_price": 0.0,
+      "total": 0.0
+    }
+  ],
+  "subtotal": 0.0,
+  "vat_18_percent": 0.0,
+  "total_tax": 0.0,
+  "cashless_payment": 0.0,
+  "cash_payment": 0.0,
+  "bonus_payment": 0.0,
+  "advance_payment": 0.0,
+  "credit_payment": 0.0,
+  "queue_number": "Queue/line number",
+  "fiscal_id": "FISCAL ID code",
+  "fiscal_registration": "NMQ registration number",
+  "filename": "53kif7iNCYY5.jpeg",
+  "raw_response": "\n [\n   { \"store_name\": \"Store business name\", \"store_address\": \"Full store address\", \"store_code\": \"Store code (if present)\", \"taxpayer_name\": \"Taxpayer name (same as store name)\", \"tax_id\": \"VÖEN number\", \"receipt_number\": \"Receipt/check number\", \"cashier_name\": \"Cashier full name\", \"date\": \"DD.MM.YYYY\", \"time\": \"HH:MM:SS\", \"items\": [ { \"name\": \"Clean item name (no ƏDV codes)\", \"quantity\": 1.0, \"unit_price\": 0.0, \"total\": 0.0 } ], \"subtotal\": 0.0, \"vat_18_percent\": 0.0, \"total_tax\": 0.0, \"cashless_payment\": 0.0, \"cash_payment\": 0.0, \"bonus_payment\": 0.0, \"advance_payment\": 0.0, \"credit_payment\": 0.0, \"queue_number\": \"Queue/line number\", \"fiscal_id\": \"FISCAL ID code\", \"fiscal_registration\": \"NMQ registration number\" }\n]"
+}

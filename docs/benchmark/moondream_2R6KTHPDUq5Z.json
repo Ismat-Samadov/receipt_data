@@ -1,0 +1,13 @@
+{
+  "filename": "2R6KTHPDUq5Z.jpeg",
+  "model": "moondream",
+  "success": false,
+  "time_seconds": 5.39,
+  "items_count": 0,
+  "has_store_name": false,
+  "has_date": false,
+  "has_tax_id": false,
+  "extracted_data": null,
+  "raw_response": "\n [\n  {'store_name': 'Vegi ödüyicinin adı', 'store_address': 'Vegi ödüyicinin adı', 'store_code': 'NKA', 'taxpayer_name': 'Kassir', 'date': '02.08.2021', 'time': '14:35:43', 'subtotal': 0.0, 'vat_18_percent': 0.17, 'total': 0.72, 'cashless_payment': 0.73, 'cash_payment': 0.75, 'bonus_payment': 0.76, 'advance_payment': 0.78, 'credit_payment': 0.79, 'queue_number': 1, 'fiscal_id': 'NKA', 'fiscal_registration': 'NMQ', 'refund_date': '02.08.2021', 'refund_time': '14:35:43'},\n  ... (other fields)",
+  "is_placeholder": true
+}
