@@ -52,6 +52,16 @@ class KapitalBankScraper:
         4. Copy the cookies and xsrf-token from the request headers
         """
 
+        if not self.xsrf_token:
+            print("❌ Error: XSRF_TOKEN not provided")
+            print("Please set the XSRF_TOKEN environment variable or pass it as an argument")
+            sys.exit(1)
+
+        if not self.cookies:
+            print("❌ Error: KB_COOKIES not provided")
+            print("Please set the KB_COOKIES environment variable or pass it as an argument")
+            sys.exit(1)
+
         self.session.headers.update({
             'accept': '*/*',
             'accept-language': 'az',
@@ -62,34 +72,16 @@ class KapitalBankScraper:
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-            'xsrf-token': self.xsrf_token or 'ATvIHlRI-B5E9Xw1vwYpDpFE4tnDD358RmiI',
+            'xsrf-token': self.xsrf_token,
         })
 
-        # Parse cookies if provided as string
-        if self.cookies:
-            cookie_dict = {}
-            for item in self.cookies.split('; '):
-                if '=' in item:
-                    key, value = item.split('=', 1)
-                    cookie_dict[key] = value
-            self.session.cookies.update(cookie_dict)
-        else:
-            # Default cookies - Updated from browser (2026-01-28)
-            self.session.cookies.update({
-                '_cfuvid': 'z2cUFvMdzqXi7fZ3k0hhr5nBYhtWfSLTHveKeUbVNKg-1769540013328-0.0.1.1-604800000',
-                '_ga': 'GA1.2.432138089.1769540013',
-                '_gid': 'GA1.2.1613765365.1769540013',
-                '_fbp': 'fb.1.1769540013423.8565377561980374',
-                '_gcl_au': '1.1.330248463.1769540018',
-                '_csrf': 'PHRdH4bWafkf2KMkhfNnm40O',
-                '__cf_bm': 'z4IIX0Ki8izHMxdu4_.Rm9C9333.whquRLuKWL_qRWY-1769625383-1.0.1.1-dBK4x.d2CPKOpQtVs6PKtV48Xay0brgJM4_WJyqkwr2V9IRrlHwnrut19w.szihnMrPasolJytAYK43X48bmYYKDJ.RV8Cl.YyQzdiU_ANM',
-                '_gat_UA-172642843-1': '1',
-                '_clck': '5bnshr%5E2%5Eg33%5E0%5E2218',
-                'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTYyNTcwM30.JGvSWUyPy1mXNB9qXgRtaduh86ldBIJu7n5vxlDAJxRhJ1LhDeww1VNNCyYQLHxKId98wLMeiulc44rMgC7hLA',
-                'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTYyNjMwM30.ukesPzjp-qBRgin9m5RrR0Xlgge7PY1fs4NYrUEuqXR3HFYD5dzBX1_Zdery4bsFYjeSSpQjkAip4DKAtfn3jQ',
-                '_ga_HXWDWPEXE0': 'GS2.2.s1769625383$o2$g1$t1769625404$j39$l0$h0',
-                '_clsk': '14ob1qy%5E1769625404748%5E2%5E1%5Ek.clarity.ms%2Fcollect',
-            })
+        # Parse cookies from string
+        cookie_dict = {}
+        for item in self.cookies.split('; '):
+            if '=' in item:
+                key, value = item.split('=', 1)
+                cookie_dict[key] = value
+        self.session.cookies.update(cookie_dict)
 
     def fetch_page(self, page: int, from_date: datetime, to_date: datetime) -> dict:
         """
