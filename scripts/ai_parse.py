@@ -8,6 +8,7 @@ Key improvements:
 - Better error handling and rate limiting
 - Cost tracking and optimization
 - Base64 image encoding for reliability
+- Interruption handling with checkpoint/resume capability
 """
 
 import os
@@ -20,6 +21,8 @@ import logging
 from openai import OpenAI
 from dotenv import load_dotenv
 import time
+import signal
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from typing import List, Dict, Optional
@@ -37,6 +40,8 @@ logger = logging.getLogger(__name__)
 # --- CONFIGURATION ---
 RECEIPTS_DIR = Path('../data/receipts')
 OUTPUT_CSV = Path('../data/items.csv')
+CHECKPOINT_FILE = Path('../data/parse_checkpoint.json')
+COMPLETED_FILE = Path('../data/parse_completed.txt')
 BATCH_SIZE = 5  # Smaller batches for vision API
 MAX_WORKERS = 3  # Reduced for API rate limiting
 MAX_RETRIES = 3
@@ -55,12 +60,25 @@ if not api_key:
 
 client = OpenAI(api_key=api_key)
 
-# Thread-safe counters
+# Thread-safe counters and state
 counter_lock = threading.Lock()
 processed_count = 0
 total_cost = 0.0
 total_input_tokens = 0
 total_output_tokens = 0
+stop_requested = False
+
+# Signal handler for graceful shutdown
+def signal_handler(signum, frame):
+    """Handle interrupt signals gracefully."""
+    global stop_requested
+    logger.warning(f"\n⚠️  Interrupt signal received ({signum}). Finishing current batch and saving progress...")
+    logger.warning("Press Ctrl+C again to force quit (may lose current batch data)")
+    stop_requested = True
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # JSON Schema for structured output
 RECEIPT_SCHEMA = {
@@ -356,6 +374,113 @@ def validate_and_clean_item(item: Dict) -> Optional[Dict]:
         return None
 
 
+def load_checkpoint() -> Dict:
+    """Load checkpoint data if it exists."""
+    if CHECKPOINT_FILE.exists():
+        try:
+            with open(CHECKPOINT_FILE, 'r') as f:
+                checkpoint = json.load(f)
+                logger.info(f"📂 Checkpoint loaded: {checkpoint.get('processed_files', 0)} files completed")
+                return checkpoint
+        except Exception as e:
+            logger.warning(f"Failed to load checkpoint: {e}")
+    return {
+        'processed_files': 0,
+        'total_cost': 0.0,
+        'total_input_tokens': 0,
+        'total_output_tokens': 0,
+        'last_processed_file': None,
+        'timestamp': None
+    }
+
+
+def save_checkpoint(processed_files: int, last_file: str = None):
+    """Save current progress to checkpoint file."""
+    try:
+        checkpoint = {
+            'processed_files': processed_files,
+            'total_cost': total_cost,
+            'total_input_tokens': total_input_tokens,
+            'total_output_tokens': total_output_tokens,
+            'last_processed_file': last_file,
+            'timestamp': time.time()
+        }
+
+        # Atomic write
+        temp_file = CHECKPOINT_FILE.with_suffix('.tmp')
+        with open(temp_file, 'w') as f:
+            json.dump(checkpoint, f, indent=2)
+        temp_file.replace(CHECKPOINT_FILE)
+
+    except Exception as e:
+        logger.error(f"Failed to save checkpoint: {e}")
+
+
+def load_completed_files() -> set:
+    """Load set of completed filenames."""
+    completed = set()
+    if COMPLETED_FILE.exists():
+        try:
+            with open(COMPLETED_FILE, 'r') as f:
+                completed = set(line.strip() for line in f if line.strip())
+            logger.info(f"📋 Loaded {len(completed)} completed files")
+        except Exception as e:
+            logger.warning(f"Failed to load completed files: {e}")
+    return completed
+
+
+def mark_file_completed(filename: str):
+    """Mark a file as completed (append-only, crash-safe)."""
+    try:
+        with open(COMPLETED_FILE, 'a') as f:
+            f.write(f"{filename}\n")
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception as e:
+        logger.error(f"Failed to mark file completed: {e}")
+
+
+def save_partial_results(results: List[Dict], append: bool = True):
+    """Save results to CSV, appending if file exists."""
+    try:
+        if not results:
+            return
+
+        df_new = pd.DataFrame(results)
+
+        # Define column order
+        columns = [
+            'filename', 'store_name', 'store_address', 'store_code', 'taxpayer_name',
+            'tax_id', 'receipt_number', 'cashier_name', 'date', 'time',
+            'item_name', 'quantity', 'unit_price', 'line_total', 'subtotal',
+            'vat_18_percent', 'total_tax', 'cashless_payment', 'cash_payment', 'bonus_payment',
+            'advance_payment', 'credit_payment', 'queue_number', 'cash_register_model',
+            'cash_register_serial', 'fiscal_id', 'fiscal_registration', 'refund_amount',
+            'refund_date', 'refund_time'
+        ]
+
+        # Ensure all columns exist
+        for col in columns:
+            if col not in df_new.columns:
+                df_new[col] = None
+        df_new = df_new[columns]
+
+        # Append or create new file
+        OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+
+        if append and OUTPUT_CSV.exists():
+            # Append without header
+            df_new.to_csv(OUTPUT_CSV, mode='a', header=False, index=False, encoding='utf-8')
+            logger.info(f"  💾 Appended {len(df_new)} rows to {OUTPUT_CSV}")
+        else:
+            # Write new file with header
+            df_new.to_csv(OUTPUT_CSV, index=False, encoding='utf-8')
+            logger.info(f"  💾 Created {OUTPUT_CSV} with {len(df_new)} rows")
+
+    except Exception as e:
+        logger.error(f"Failed to save partial results: {e}")
+
+
 def create_fallback_data(filename: str) -> List[Dict]:
     """Create fallback data when extraction fails."""
     return [{
@@ -421,8 +546,10 @@ def process_receipt(image_path: Path, filename: str) -> List[Dict]:
         return create_fallback_data(filename)
 
 
-def process_batch(batch_files: List[Path], batch_num: int, total_batches: int) -> List[Dict]:
-    """Process a batch of receipts with controlled concurrency."""
+def process_batch(batch_files: List[Path], batch_num: int, total_batches: int, completed_files: set) -> List[Dict]:
+    """Process a batch of receipts with controlled concurrency and interruption handling."""
+
+    global stop_requested
 
     logger.info(f"\n{'='*60}")
     logger.info(f"Batch {batch_num}/{total_batches} - {len(batch_files)} receipts")
@@ -439,10 +566,22 @@ def process_batch(batch_files: List[Path], batch_num: int, total_batches: int) -
 
         # Collect results with timeout
         for future in as_completed(future_to_file, timeout=120):
+            # Check for stop request
+            if stop_requested:
+                logger.warning("⚠️  Stop requested, cancelling remaining tasks...")
+                for f in future_to_file:
+                    f.cancel()
+                break
+
             filepath = future_to_file[future]
             try:
                 result = future.result(timeout=60)
                 batch_results.extend(result)
+
+                # Mark file as completed
+                mark_file_completed(filepath.name)
+                completed_files.add(filepath.name)
+
             except Exception as e:
                 logger.error(f"  Failed {filepath.name}: {e}")
                 batch_results.extend(create_fallback_data(filepath.name))
@@ -451,7 +590,9 @@ def process_batch(batch_files: List[Path], batch_num: int, total_batches: int) -
 
 
 def main():
-    """Main function to run AI-enhanced receipt processing."""
+    """Main function to run AI-enhanced receipt processing with resume capability."""
+
+    global processed_count, total_cost, total_input_tokens, total_output_tokens, stop_requested
 
     logger.info("\n" + "="*70)
     logger.info("🚀 AI-Enhanced Receipt Parser with GPT-4o Vision")
@@ -462,98 +603,146 @@ def main():
         logger.error(f"Receipts directory not found: {RECEIPTS_DIR}")
         return
 
+    # Load checkpoint and completed files
+    checkpoint = load_checkpoint()
+    completed_files = load_completed_files()
+
+    # Restore state from checkpoint
+    total_cost = checkpoint.get('total_cost', 0.0)
+    total_input_tokens = checkpoint.get('total_input_tokens', 0)
+    total_output_tokens = checkpoint.get('total_output_tokens', 0)
+
     # Get all image files
-    image_files = sorted([
+    all_image_files = sorted([
         f for f in RECEIPTS_DIR.iterdir()
         if f.suffix.lower() in ['.jpeg', '.jpg', '.png', '.tiff']
     ])
 
-    total_files = len(image_files)
-    if total_files == 0:
-        logger.error("No image files found in receipts directory")
+    # Filter out completed files
+    image_files = [f for f in all_image_files if f.name not in completed_files]
+
+    total_files = len(all_image_files)
+    remaining_files = len(image_files)
+
+    if remaining_files == 0:
+        logger.info("✅ All files already processed!")
+        logger.info(f"Total files: {total_files}")
+        logger.info(f"Total cost: ${total_cost:.4f}")
         return
 
-    total_batches = (total_files + BATCH_SIZE - 1) // BATCH_SIZE
+    total_batches = (remaining_files + BATCH_SIZE - 1) // BATCH_SIZE
 
     logger.info(f"\n📊 Configuration:")
     logger.info(f"   Total receipts: {total_files}")
+    logger.info(f"   Already completed: {len(completed_files)}")
+    logger.info(f"   Remaining: {remaining_files}")
     logger.info(f"   Batch size: {BATCH_SIZE}")
     logger.info(f"   Total batches: {total_batches}")
     logger.info(f"   Max workers: {MAX_WORKERS}")
     logger.info(f"   Model: GPT-4o with Vision")
     logger.info(f"   Output: {OUTPUT_CSV}")
 
+    if len(completed_files) > 0:
+        logger.info(f"\n🔄 Resuming from checkpoint...")
+        logger.info(f"   Previous cost: ${total_cost:.4f}")
+
+    # Estimate remaining cost
+    avg_cost_per_receipt = 0.020  # Conservative estimate
+    estimated_cost = remaining_files * avg_cost_per_receipt
+    logger.info(f"\n💰 Cost Estimate:")
+    logger.info(f"   Estimated for remaining {remaining_files} receipts: ${estimated_cost:.2f}")
+    logger.info(f"   Total estimated (including completed): ${total_cost + estimated_cost:.2f}")
+
     # Process in batches
-    all_results = []
     start_time = time.time()
+    append_mode = len(completed_files) > 0  # Append if resuming
 
-    for i in range(0, total_files, BATCH_SIZE):
-        batch_files = image_files[i:i+BATCH_SIZE]
-        batch_num = (i // BATCH_SIZE) + 1
+    try:
+        for i in range(0, remaining_files, BATCH_SIZE):
+            if stop_requested:
+                logger.warning("\n⚠️  Processing interrupted by user")
+                break
 
-        batch_start = time.time()
-        batch_results = process_batch(batch_files, batch_num, total_batches)
-        all_results.extend(batch_results)
+            batch_files = image_files[i:i+BATCH_SIZE]
+            batch_num = (i // BATCH_SIZE) + 1
 
-        batch_time = time.time() - batch_start
-        avg_time = batch_time / len(batch_files)
+            batch_start = time.time()
+            batch_results = process_batch(batch_files, batch_num, total_batches, completed_files)
 
-        # Progress update
-        logger.info(f"\n✅ Batch {batch_num} completed:")
-        logger.info(f"   Time: {batch_time:.1f}s ({avg_time:.1f}s/receipt)")
-        logger.info(f"   Items extracted: {len(batch_results)}")
-        logger.info(f"   Total cost so far: ${total_cost:.4f}")
+            # Save results immediately after each batch (crash-safe)
+            if batch_results:
+                save_partial_results(batch_results, append=append_mode)
+                append_mode = True  # After first batch, always append
 
-        # Rate limiting between batches
-        if batch_num < total_batches:
-            logger.info(f"   Waiting 2s before next batch...")
-            time.sleep(2)
+            batch_time = time.time() - batch_start
+            avg_time = batch_time / len(batch_files) if batch_files else 0
 
-    # Create DataFrame
-    df = pd.DataFrame(all_results)
+            # Update checkpoint
+            processed_count = len(completed_files)
+            save_checkpoint(processed_count, batch_files[-1].name if batch_files else None)
 
-    # Define column order
-    columns = [
-        'filename', 'store_name', 'store_address', 'store_code', 'taxpayer_name',
-        'tax_id', 'receipt_number', 'cashier_name', 'date', 'time',
-        'item_name', 'quantity', 'unit_price', 'line_total', 'subtotal',
-        'vat_18_percent', 'total_tax', 'cashless_payment', 'cash_payment', 'bonus_payment',
-        'advance_payment', 'credit_payment', 'queue_number', 'cash_register_model',
-        'cash_register_serial', 'fiscal_id', 'fiscal_registration', 'refund_amount',
-        'refund_date', 'refund_time'
-    ]
+            # Progress update
+            logger.info(f"\n✅ Batch {batch_num}/{total_batches} completed:")
+            logger.info(f"   Time: {batch_time:.1f}s ({avg_time:.1f}s/receipt)")
+            logger.info(f"   Items extracted: {len(batch_results)}")
+            logger.info(f"   Total cost so far: ${total_cost:.4f}")
+            logger.info(f"   Progress: {len(completed_files)}/{total_files} ({len(completed_files)/total_files*100:.1f}%)")
 
-    # Ensure all columns exist and reorder
-    for col in columns:
-        if col not in df.columns:
-            df[col] = None
-    df = df[columns]
+            # Rate limiting between batches
+            if batch_num < total_batches and not stop_requested:
+                logger.info(f"   Waiting 2s before next batch...")
+                time.sleep(2)
 
-    # Save to CSV
-    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(OUTPUT_CSV, index=False, encoding='utf-8')
+    except KeyboardInterrupt:
+        logger.warning("\n\n⚠️  Force interrupted! Progress has been saved.")
+        logger.warning(f"   Completed: {len(completed_files)}/{total_files} files")
+        logger.warning(f"   Resume by running the script again")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"\n❌ Unexpected error: {e}")
+        logger.error("Progress has been saved. Resume by running the script again.")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
     # Final statistics
     total_time = time.time() - start_time
-    avg_time_per_receipt = total_time / total_files
+    processed_this_run = len(completed_files) - len(all_image_files) + remaining_files
 
     logger.info(f"\n{'='*70}")
-    logger.info("🎯 EXTRACTION COMPLETE")
+    if stop_requested:
+        logger.info("⚠️  PROCESSING INTERRUPTED")
+    else:
+        logger.info("🎯 EXTRACTION COMPLETE")
     logger.info(f"{'='*70}")
+
     logger.info(f"\n📈 Statistics:")
-    logger.info(f"   Total time: {total_time:.1f}s ({avg_time_per_receipt:.1f}s/receipt)")
-    logger.info(f"   Receipts processed: {len(df['filename'].unique())}")
-    logger.info(f"   Total items extracted: {len(df)}")
-    logger.info(f"   Avg items/receipt: {len(df) / len(df['filename'].unique()):.1f}")
-    logger.info(f"   Receipts with data: {len(df[df['item_name'].notna()])}")
+    logger.info(f"   Total time this run: {total_time:.1f}s")
+    logger.info(f"   Files processed this run: {processed_this_run}")
+    logger.info(f"   Total files completed: {len(completed_files)}/{total_files}")
+    logger.info(f"   Remaining: {total_files - len(completed_files)}")
+
+    if OUTPUT_CSV.exists():
+        df = pd.read_csv(OUTPUT_CSV)
+        logger.info(f"   Total items in CSV: {len(df)}")
+        logger.info(f"   Unique receipts: {len(df['filename'].unique())}")
+        if len(df) > 0:
+            logger.info(f"   Avg items/receipt: {len(df) / len(df['filename'].unique()):.1f}")
 
     logger.info(f"\n💰 Cost Analysis:")
     logger.info(f"   Total cost: ${total_cost:.4f}")
-    logger.info(f"   Cost per receipt: ${total_cost / total_files:.4f}")
+    if len(completed_files) > 0:
+        logger.info(f"   Cost per receipt: ${total_cost / len(completed_files):.4f}")
     logger.info(f"   Input tokens: {total_input_tokens:,}")
     logger.info(f"   Output tokens: {total_output_tokens:,}")
 
     logger.info(f"\n✅ Data saved to: {OUTPUT_CSV}")
+    logger.info(f"📋 Checkpoint: {CHECKPOINT_FILE}")
+    logger.info(f"📝 Completed files: {COMPLETED_FILE}")
+
+    if total_files - len(completed_files) > 0:
+        logger.info(f"\n🔄 To resume, simply run the script again")
+
     logger.info(f"{'='*70}\n")
 
 
