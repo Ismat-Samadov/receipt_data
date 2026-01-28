@@ -1,18 +1,50 @@
 {
-  "store_name": "Store business name",
-  "store_address": "Full store address",
-  "store_code": "Store code (if present)",
-  "taxpayer_name": "Taxpayer name (same as store name)",
-  "vat_18_percent": 0.0,
-  "subtotal": 0.0,
+  "store_name": "MEYDAN MARKA",
+  "store_address": "BAYLAR ÇİKMAŞI",
+  "store_code": "02",
+  "taxpayer_name": "MEYDAN MARKA",
+  "tax_id": "1234567890",
+  "receipt_number": "001",
+  "cashier_name": "Rasmiyət",
+  "date": "24.04.2023",
+  "time": "17:25:06",
+  "items": [
+    {
+      "name": "Sıçaklama",
+      "quantity": 1.0,
+      "unit_price": 0.5,
+      "total": 0.5
+    },
+    {
+      "name": "Batatyar",
+      "quantity": 2.0,
+      "unit_price": 2.0,
+      "total": 4.0
+    },
+    {
+      "name": "Kaygı",
+      "quantity": 0.5,
+      "unit_price": 1.0,
+      "total": 0.5
+    }
+  ],
+  "subtotal": 5.0,
+  "vat_18_percent": 0.9,
+  "total_tax": 0.9,
+  "total": 6.0,
   "cashless_payment": 0.0,
-  "cash_payment": 0.0,
+  "cash_payment": 6.0,
   "bonus_payment": 0.0,
   "advance_payment": 0.0,
   "credit_payment": 0.0,
-  "queue_number": "Queue/line number",
-  "fiscal_id": "FISCAL ID code",
-  "fiscal_registration": "NMQ registration number",
+  "queue_number": null,
+  "cash_register_model": "15",
+  "cash_register_serial": "234567890",
+  "fiscal_id": "1234567890",
+  "fiscal_registration": null,
+  "refund_amount": 0.0,
+  "refund_date": null,
+  "refund_time": null,
   "filename": "2T8rx3K2aSor.jpeg",
-  "raw_response": "\n [\n   { \"store_name\": \"Store business name\", \"store_address\": \"Full store address\", \"store_code\": \"Store code (if present)\", \"taxpayer_name\": \"Taxpayer name (same as store name)\", \"vat_18_percent\": 0.0, \"subtotal\": 0.0, \"cashless_payment\": 0.0, \"cash_payment\": 0.0, \"bonus_payment\": 0.0, \"advance_payment\": 0.0, \"credit_payment\": 0.0, \"queue_number\": \"Queue/line number\", \"fiscal_id\": \"FISCAL ID code\", \"fiscal_registration\": \"NMQ registration number\" },\n   ... (other items) ..."
+  "raw_response": " ```json\n{\n  \"store_name\": \"MEYDAN MARKA\",\n  \"store_address\": \"BAYLAR ÇİKMAŞI\",\n  \"store_code\": \"02\",\n  \"taxpayer_name\": \"MEYDAN MARKA\",\n  \"tax_id\": \"1234567890\",\n  \"receipt_number\": \"001\",\n  \"cashier_name\": \"Rasmiyət\",\n  \"date\": \"24.04.2023\",\n  \"time\": \"17:25:06\",\n  \"items\": [\n    {\n      \"name\": \"Sıçaklama\",\n      \"quantity\": 1.0,\n      \"unit_price\": 0.5,\n      \"total\": 0.5\n    },\n    {\n      \"name\": \"Batatyar\",\n      \"quantity\": 2.0,\n      \"unit_price\": 2.0,\n      \"total\": 4.0\n    },\n    {\n      \"name\": \"Kaygı\",\n      \"quantity\": 0.5,\n      \"unit_price\": 1.0,\n      \"total\": 0.5\n    }\n  ],\n  \"subtotal\": 5.0,\n  \"vat_18_percent\": 0.9,\n  \"total_tax\": 0.9,\n  \"total\": 6.0,\n  \"cashless_payment\": 0.0,\n  \"cash_payment\": 6.0,\n  \"bonus_payment\": 0.0,\n  \"advance_payment\": 0.0,\n  \"credit_payment\": 0.0,\n  \"queue_number\": null,\n  \"cash_register_model\": \"15\",\n  \"cash_register_serial\": \"234567890\",\n  \"fiscal_id\": \"1234567890\",\n  \"fiscal_registration\": null,\n  \"refund_amount\": 0.0,\n  \"refund_date\": null,\n  \"refund_time\": null\n}\n``` "
 }
