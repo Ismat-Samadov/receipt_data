@@ -35,10 +35,10 @@ except Exception:
 BASE_URL = "https://monitoring.e-kassa.gov.az/pks-monitoring/2.0.0/documents/"
 
 # Input file (CSV preferred). You can also point to a .txt (one id per line).
-FISCAL_IDS_FILE = "../data/fiscal_ids_from_api.txt"
+FISCAL_IDS_FILE = "../data/fiscals.csv"
 
 # CSV settings
-FISCAL_ID_COLUMN = "FISCAL_ID"  # column name (str) or integer index (0-based) if CSV_HAS_HEADER=False
+FISCAL_ID_COLUMN = "fiscal_id"  # column name (str) or integer index (0-based) if CSV_HAS_HEADER=False
 CSV_DELIMITER = ","
 CSV_ENCODING = "utf-8"
 CSV_HAS_HEADER = True

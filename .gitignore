@@ -1,3 +1,9 @@
+receipts_completed.txt
+receipts_failed.txt
+receipts_to_download.txt
+receipts_downloading.txt
+download_checkpoint.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
