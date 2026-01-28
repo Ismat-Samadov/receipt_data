@@ -58,7 +58,11 @@ if not api_key:
     logger.error("OPENAI_API_KEY not found in environment variables")
     raise ValueError("OPENAI_API_KEY must be set in .env file")
 
-client = OpenAI(api_key=api_key)
+# Initialize client with explicit base_url to avoid environment variable override
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.openai.com/v1"  # Explicit URL to prevent OPENAI_BASE_URL env override
+)
 
 # Thread-safe counters and state
 counter_lock = threading.Lock()
