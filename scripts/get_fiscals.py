@@ -22,10 +22,9 @@ REQUEST_DELAY = 1.0  # Delay between requests (seconds)
 MAX_RETRIES = 3
 RETRY_DELAY = 2.0
 
-# Date range configuration
-DATE_RANGE_DAYS = 2557  # From 2019 to present (~7 years)
+# Date range configuration - Start from January 1, 2019
+FROM_DATE = datetime(2019, 1, 1)
 TO_DATE = datetime.now()
-FROM_DATE = TO_DATE - timedelta(days=DATE_RANGE_DAYS)
 
 
 class KapitalBankScraper:
@@ -63,7 +62,7 @@ class KapitalBankScraper:
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-            'xsrf-token': self.xsrf_token or '',
+            'xsrf-token': self.xsrf_token or 'ATvIHlRI-B5E9Xw1vwYpDpFE4tnDD358RmiI',
         })
 
         # Parse cookies if provided as string
@@ -75,21 +74,21 @@ class KapitalBankScraper:
                     cookie_dict[key] = value
             self.session.cookies.update(cookie_dict)
         else:
-            # Default cookies - Updated from browser
+            # Default cookies - Updated from browser (2026-01-28)
             self.session.cookies.update({
-                '_csrf': 'GsXaXtAPBBtW9IaKcCv1pqJY',
-                '__cf_bm': '8.71EWNh3JB1G_i7vkDolbAXSBu0nDoA_1HVYEPrsTk-1769540013-1.0.1.1-6SRbyDqoqeKA1ZRUVOEJlh3PS9yEujUhhZAYMH47mbinTKmFlif_HQP8GhcRxwfkaGKVaPVkqDGQFoLMElpv2t4KYFA09tUNLtfAiHaeg2o',
                 '_cfuvid': 'z2cUFvMdzqXi7fZ3k0hhr5nBYhtWfSLTHveKeUbVNKg-1769540013328-0.0.1.1-604800000',
                 '_ga': 'GA1.2.432138089.1769540013',
                 '_gid': 'GA1.2.1613765365.1769540013',
                 '_fbp': 'fb.1.1769540013423.8565377561980374',
-                '_clck': '5bnshr%5E2%5Eg32%5E0%5E2218',
                 '_gcl_au': '1.1.330248463.1769540018',
+                '_csrf': 'PHRdH4bWafkf2KMkhfNnm40O',
+                '__cf_bm': 'z4IIX0Ki8izHMxdu4_.Rm9C9333.whquRLuKWL_qRWY-1769625383-1.0.1.1-dBK4x.d2CPKOpQtVs6PKtV48Xay0brgJM4_WJyqkwr2V9IRrlHwnrut19w.szihnMrPasolJytAYK43X48bmYYKDJ.RV8Cl.YyQzdiU_ANM',
                 '_gat_UA-172642843-1': '1',
-                'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTU0MDk3Mn0.WHaux9P7CHI_I1U_I_F2hX1ZB9UyUZg5-esfQ_32QozrMWGw53-y7uqcFrwVXMSIMeKtLvhJ8SKtQsznrUks3w',
-                'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTU0MTU3Mn0.3M7Jv3CAGJm8JWwEbfJU_SYEUF80QFcmI25BvhrjosEB5vsp4PQyDZFXvirL0I8LBjSZwkKqizRB7NxFrPnbyQ',
-                '_ga_HXWDWPEXE0': 'GS2.2.s1769540013$o1$g1$t1769540672$j29$l0$h0',
-                '_clsk': '1ib8kro%5E1769540673302%5E5%5E1%5Ek.clarity.ms%2Fcollect',
+                '_clck': '5bnshr%5E2%5Eg33%5E0%5E2218',
+                'ac_session': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIrOTk0NTA0Nzg3NDYzIiwidGl0bGUiOiJTxo9Nxo9ET1YgxLBTTcaPVCBBWsaPUiBPxJ5MVSIsImdlbmRlciI6Ik1BTEUiLCJzdGF0dXMiOjIsInVpZCI6NjUxMzgsImF1dGgiOiJVU0VSIiwidG9rZW5fdHlwZSI6IkFDQ0VTUyIsImV4cCI6MTc2OTYyNTcwM30.JGvSWUyPy1mXNB9qXgRtaduh86ldBIJu7n5vxlDAJxRhJ1LhDeww1VNNCyYQLHxKId98wLMeiulc44rMgC7hLA',
+                'rf_session': 'eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjY1MTM4LCJ0b2tlbl90eXBlIjoiUkVGUkVTSCIsImV4cCI6MTc2OTYyNjMwM30.ukesPzjp-qBRgin9m5RrR0Xlgge7PY1fs4NYrUEuqXR3HFYD5dzBX1_Zdery4bsFYjeSSpQjkAip4DKAtfn3jQ',
+                '_ga_HXWDWPEXE0': 'GS2.2.s1769625383$o2$g1$t1769625404$j39$l0$h0',
+                '_clsk': '14ob1qy%5E1769625404748%5E2%5E1%5Ek.clarity.ms%2Fcollect',
             })
 
     def fetch_page(self, page: int, from_date: datetime, to_date: datetime) -> dict:
