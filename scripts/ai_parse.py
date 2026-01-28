@@ -593,7 +593,7 @@ def process_batch(batch_files: List[Path], batch_num: int, total_batches: int, c
         }
 
         # Collect results with timeout
-        for future in as_completed(future_to_file, timeout=120):
+        for future in as_completed(future_to_file, timeout=300):  # Increased to 5 minutes
             # Check for stop request
             if stop_requested:
                 logger.warning("⚠️  Stop requested, cancelling remaining tasks...")
@@ -603,7 +603,7 @@ def process_batch(batch_files: List[Path], batch_num: int, total_batches: int, c
 
             filepath = future_to_file[future]
             try:
-                result = future.result(timeout=60)
+                result = future.result(timeout=180)  # Increased to 3 minutes per receipt
                 batch_results.extend(result)
 
                 # Mark file as completed
