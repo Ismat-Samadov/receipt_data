@@ -54,9 +54,25 @@ COST_PER_IMAGE = 0.00765  # Additional cost for vision
 
 # Initialize OpenAI client
 api_key = os.getenv('OPENAI_API_KEY')
-if not api_key:
-    logger.error("OPENAI_API_KEY not found in environment variables")
-    raise ValueError("OPENAI_API_KEY must be set in .env file")
+
+# Check if environment has OpenRouter key instead of OpenAI - if so, load directly from .env
+if api_key and api_key.startswith('sk-or-'):
+    logger.warning("Detected OpenRouter API key in environment, loading OpenAI key from .env file instead")
+    # Read .env file directly to get the correct API key
+    env_file = Path(__file__).parent.parent / '.env'
+    if env_file.exists():
+        with open(env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('OPENAI_API_KEY='):
+                    # Extract value, removing quotes
+                    api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
+                    logger.info("✓ Loaded OpenAI API key from .env file")
+                    break
+
+if not api_key or api_key.startswith('sk-or-'):
+    logger.error("OPENAI_API_KEY not found or is still OpenRouter key")
+    raise ValueError("OPENAI_API_KEY must be set in .env file with a valid OpenAI key (sk-proj-...)")
 
 # Initialize client with explicit base_url to avoid environment variable override
 client = OpenAI(
