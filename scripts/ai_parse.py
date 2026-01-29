@@ -289,8 +289,18 @@ Filename: {filename}"""
                 total_input_tokens += input_tokens
                 total_output_tokens += output_tokens
 
-            # Parse JSON response
-            result = json.loads(ai_response)
+            # Parse JSON response - handle malformed JSON
+            try:
+                result = json.loads(ai_response)
+            except json.JSONDecodeError as json_err:
+                logger.error(f"  JSON decode error for {filename}: {json_err}")
+                # Try to fix common JSON issues
+                if "Unterminated string" in str(json_err):
+                    logger.warning(f"  Attempting to fix unterminated string in JSON")
+                    # This is a malformed response, skip to next attempt
+                    raise Exception(f"Malformed JSON response: {json_err}")
+                raise
+
             items = result.get('items', [])
 
             # Validate and clean items
@@ -592,27 +602,56 @@ def process_batch(batch_files: List[Path], batch_num: int, total_batches: int, c
             for filepath in batch_files
         }
 
-        # Collect results with timeout
-        for future in as_completed(future_to_file, timeout=300):  # Increased to 5 minutes
-            # Check for stop request
-            if stop_requested:
-                logger.warning("⚠️  Stop requested, cancelling remaining tasks...")
-                for f in future_to_file:
-                    f.cancel()
-                break
+        # Collect results - handle timeouts more gracefully
+        completed_count = 0
+        try:
+            for future in as_completed(future_to_file, timeout=300):  # Increased to 5 minutes
+                # Check for stop request
+                if stop_requested:
+                    logger.warning("⚠️  Stop requested, cancelling remaining tasks...")
+                    for f in future_to_file:
+                        f.cancel()
+                    break
 
-            filepath = future_to_file[future]
-            try:
-                result = future.result(timeout=180)  # Increased to 3 minutes per receipt
-                batch_results.extend(result)
+                filepath = future_to_file[future]
+                try:
+                    result = future.result(timeout=180)  # Increased to 3 minutes per receipt
+                    batch_results.extend(result)
 
-                # Mark file as completed
-                mark_file_completed(filepath.name)
-                completed_files.add(filepath.name)
+                    # Mark file as completed
+                    mark_file_completed(filepath.name)
+                    completed_files.add(filepath.name)
+                    completed_count += 1
 
-            except Exception as e:
-                logger.error(f"  Failed {filepath.name}: {e}")
-                batch_results.extend(create_fallback_data(filepath.name))
+                except Exception as e:
+                    logger.error(f"  Failed {filepath.name}: {e}")
+                    batch_results.extend(create_fallback_data(filepath.name))
+                    mark_file_completed(filepath.name)
+                    completed_files.add(filepath.name)
+                    completed_count += 1
+
+        except TimeoutError:
+            logger.warning(f"⚠️  Batch timeout after completing {completed_count}/{len(batch_files)} receipts")
+            # Mark remaining files that actually completed and add fallback for others
+            for future, filepath in future_to_file.items():
+                if future.done() and not future.cancelled():
+                    try:
+                        result = future.result(timeout=0)
+                        if result:
+                            batch_results.extend(result)
+                            mark_file_completed(filepath.name)
+                            completed_files.add(filepath.name)
+                    except Exception as e:
+                        logger.warning(f"  Could not get result for {filepath.name}: {e}")
+                        batch_results.extend(create_fallback_data(filepath.name))
+                        mark_file_completed(filepath.name)
+                        completed_files.add(filepath.name)
+                else:
+                    # Future didn't complete - mark with fallback
+                    logger.warning(f"  Timeout - marking {filepath.name} as failed")
+                    batch_results.extend(create_fallback_data(filepath.name))
+                    mark_file_completed(filepath.name)
+                    completed_files.add(filepath.name)
 
     return batch_results
 
@@ -695,7 +734,18 @@ def main():
             batch_num = (i // BATCH_SIZE) + 1
 
             batch_start = time.time()
-            batch_results = process_batch(batch_files, batch_num, total_batches, completed_files)
+            try:
+                batch_results = process_batch(batch_files, batch_num, total_batches, completed_files)
+            except Exception as batch_error:
+                logger.error(f"Batch {batch_num} error: {batch_error}")
+                logger.warning(f"Marking batch {batch_num} files as failed and continuing...")
+                batch_results = []
+                # Mark all files in this batch as completed with fallback data
+                for filepath in batch_files:
+                    if filepath.name not in completed_files:
+                        batch_results.extend(create_fallback_data(filepath.name))
+                        mark_file_completed(filepath.name)
+                        completed_files.add(filepath.name)
 
             # Save results immediately after each batch (crash-safe)
             if batch_results:
