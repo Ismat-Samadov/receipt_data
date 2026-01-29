@@ -28,7 +28,7 @@ if api_key and api_key.startswith('sk-or-'):
 
 client = OpenAI(api_key=api_key, base_url="https://api.openai.com/v1")
 
-FAILED_RECEIPTS = ['9kMzGWS1JYwS.jpeg', 'AiaPxiFxcWZF.jpeg']
+FAILED_RECEIPTS = ['J3oZk5eZquzg.jpeg', 'J7vwEWsHqgJP.jpeg']
 RECEIPTS_DIR = Path('../data/receipts')
 OUTPUT_CSV = Path('../data/items.csv')
 
